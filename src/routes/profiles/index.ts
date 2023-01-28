@@ -54,7 +54,6 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
     async function (request, reply): Promise<ProfileEntity> {
       try {
         return await fastify.db.profiles.delete(request.params.id)
-        // const profiles = await fastify.db.profiles.findMany
       } catch {
         throw fastify.httpErrors.badRequest();
       }
