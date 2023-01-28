@@ -10,7 +10,10 @@ import type { UserEntity } from '../../utils/DB/entities/DBUsers';
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify
 ): Promise<void> => {
-  fastify.get('/', async function (request, reply): Promise<UserEntity[]> {});
+  fastify.get('/', async function (request, reply): Promise<UserEntity[]> {
+    reply.type('application/json').code(200);
+    return await fastify.db.users.findMany();
+  });
 
   fastify.get(
     '/:id',
@@ -19,7 +22,14 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<UserEntity> {}
+    async function (request, reply): Promise<UserEntity> {
+      const result = await fastify.db.users.findOne({key: "id", equals: request.params.id});
+      if (!result) {
+        throw fastify.httpErrors.notFound();
+      }
+      reply.type('application/json').code(200);
+      return result;
+    }
   );
 
   fastify.post(
@@ -29,7 +39,11 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         body: createUserBodySchema,
       },
     },
-    async function (request, reply): Promise<UserEntity> {}
+    async function (request, reply): Promise<UserEntity> {
+      const result = await fastify.db.users.create(request.body);
+      reply.type('application/json').code(200);
+      return result;
+    }
   );
 
   fastify.delete(
@@ -39,7 +53,19 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<UserEntity> {}
+    async function (request, reply): Promise<UserEntity> {
+      try {
+        const deletedUser = await fastify.db.users.delete(request.params.id);
+        const subscribers = await fastify.db.users.findMany({key: 'subscribedToUserIds', inArray: request.params.id});
+        subscribers.forEach(async (user) => {
+          user.subscribedToUserIds.splice(user.subscribedToUserIds.indexOf(request.params.id),1);
+          await fastify.db.users.change(user.id, user);
+        });
+        return deletedUser;
+      } catch {
+        throw fastify.httpErrors.badRequest();
+      }
+    }
   );
 
   fastify.post(
@@ -50,7 +76,14 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<UserEntity> {}
+    async function (request, reply): Promise<UserEntity> {
+      const user = await fastify.db.users.findOne({key: "id", equals: request.body.userId});
+      if (!user) {
+        throw fastify.httpErrors.notFound()
+      }
+      user.subscribedToUserIds.push(request.params.id);
+      return await fastify.db.users.change(request.body.userId, user);
+    }
   );
 
   fastify.post(
@@ -61,7 +94,16 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<UserEntity> {}
+    async function (request, reply): Promise<UserEntity> {
+      const user = await fastify.db.users.findOne({key: "id", equals: request.body.userId});
+      if (!user) throw fastify.httpErrors.notFound();
+
+      const indexOfSubcriber = user.subscribedToUserIds.indexOf(request.params.id);
+      if (indexOfSubcriber == -1) throw fastify.httpErrors.badRequest();
+
+      user.subscribedToUserIds.splice(indexOfSubcriber, 1);
+      return await fastify.db.users.change(request.body.userId, user);;
+    }
   );
 
   fastify.patch(
@@ -72,7 +114,13 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<UserEntity> {}
+    async function (request, reply): Promise<UserEntity> {
+      try {
+        return await fastify.db.users.change(request.params.id, request.body);
+      } catch {
+        throw fastify.httpErrors.badRequest();
+      }
+    }
   );
 };
 
