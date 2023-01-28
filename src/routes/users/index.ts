@@ -61,6 +61,12 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
           user.subscribedToUserIds.splice(user.subscribedToUserIds.indexOf(request.params.id),1);
           await fastify.db.users.change(user.id, user);
         });
+
+        const userProfile = await fastify.db.profiles.findOne({key: 'userId', equals: request.params.id});
+        if (userProfile) {
+          await fastify.db.profiles.delete(userProfile.id);
+        }
+        
         return deletedUser;
       } catch {
         throw fastify.httpErrors.badRequest();
