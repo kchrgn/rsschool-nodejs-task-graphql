@@ -1,4 +1,4 @@
-import { GraphQLSchema, GraphQLObjectType, GraphQLList } from 'graphql';
+import { GraphQLSchema, GraphQLObjectType, GraphQLList, GraphQLString, GraphQLNonNull } from 'graphql';
 import { memberType } from './memberType';
 import { postType } from './postType';
 import { profileType } from './profileType';
@@ -30,6 +30,34 @@ export const graphQLSchema = new GraphQLSchema({
         type: new GraphQLList(memberType),
         async resolve(source, args, context) {
           return await context.db.memberTypes.findMany();
+        }, 
+      },
+      user: {
+        type: userType,
+        args: {id: {type: new GraphQLNonNull(GraphQLString)}},
+        async resolve(source, args, context) {
+          return await context.db.users.findOne({key: 'id', equals: args.id});
+        },
+      },
+      post: {
+        type: postType,
+        args: {id: {type: new GraphQLNonNull(GraphQLString)}},
+        async resolve(source, args, context) {
+          return await context.db.posts.findOne({key: 'id', equals: args.id});
+        }, 
+      },
+      profile: {
+        type: profileType,
+        args: {id: {type: new GraphQLNonNull(GraphQLString)}},
+        async resolve(source, args, context) {
+          return await context.db.profiles.findOne({key: 'id', equals: args.id});
+        }, 
+      },
+      member: {
+        type: memberType,
+        args: {id: {type: new GraphQLNonNull(GraphQLString)}},
+        async resolve(source, args, context) {
+          return await context.db.memberTypes.findOne({key: 'id', equals: args.id});
         }, 
       }
     },
