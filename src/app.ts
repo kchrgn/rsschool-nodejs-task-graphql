@@ -1,11 +1,6 @@
 import { join } from 'path';
 import AutoLoad from '@fastify/autoload';
 import { FastifyPluginAsync } from 'fastify';
-import {
-  generate_createUserDTO,
-  // generate_createPostDTO,
-  // generate_createProfileDTO,
-} from '../test/utils/fake';
 
 const app: FastifyPluginAsync = async (fastify): Promise<void> => {
   fastify.register(AutoLoad, {
@@ -17,10 +12,6 @@ const app: FastifyPluginAsync = async (fastify): Promise<void> => {
     dir: join(__dirname, 'routes'),
     options: {},
   });
-
-  console.log(generate_createUserDTO())
-  await fastify.db.users.create(generate_createUserDTO());
-  console.log(fastify.db.users);
 };
 
 export default app;
