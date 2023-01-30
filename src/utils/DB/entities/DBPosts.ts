@@ -15,6 +15,15 @@ export default class DBPosts extends DBEntity<
   ChangePostDTO,
   CreatePostDTO
 > {
+  constructor() {
+    super();
+
+    this.create({
+      title: 'Hello',
+      content: 'Hello world!',
+      userId: 'e63d3721-cc74-4c96-a5f0-c2d704fe0ca1'
+    });
+  }
   async create(dto: CreatePostDTO) {
     const created: PostEntity = {
       ...dto,
